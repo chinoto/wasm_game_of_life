@@ -45,7 +45,7 @@ const drawCells = () => {
   ctx.stroke();
 };
 
-const drawGrid = () => {
+(function drawGrid() {
   ctx.beginPath();
   ctx.strokeStyle = GRID_COLOR;
 
@@ -62,13 +62,11 @@ const drawGrid = () => {
   }
 
   ctx.stroke();
-};
+})();
 
 (async () => {
   while (true) {
-    drawGrid();
     drawCells();
-
     universe.tick();
 
     await new Promise(requestAnimationFrame);
