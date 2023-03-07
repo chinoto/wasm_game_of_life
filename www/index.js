@@ -64,6 +64,16 @@ const drawCells = () => {
   ctx.stroke();
 })();
 
+let paused = false;
+const playPauseButton = document.getElementById("play-pause");
+
+playPauseButton.addEventListener("click", (event) => {
+  paused = !paused;
+  playPauseButton.textContent = paused ? "⏸" : "▶";
+});
+
+playPauseButton.click(); // Run once to get play/pause indicator
+
 (async function renderLoop() {
   let lastTime = performance.now();
   const interval = 1000 / 30;
@@ -73,7 +83,7 @@ const drawCells = () => {
     // setTimeout looks janky
     // await new Promise((res) => setTimeout(res, 1000 / 30));
     let time = await new Promise(requestAnimationFrame);
-    if (time - lastTime < interval - delta) {
+    if (paused || time - lastTime < interval - delta) {
       continue;
     }
     delta = Math.min(interval, delta + time - lastTime - interval);
