@@ -15,6 +15,14 @@ pub enum Cell {
     Dead = 0,
     Alive = 1,
 }
+impl Cell {
+    fn toggle(&mut self) {
+        *self = match *self {
+            Cell::Dead => Cell::Alive,
+            Cell::Alive => Cell::Dead,
+        };
+    }
+}
 
 #[wasm_bindgen]
 pub struct Universe {
@@ -82,6 +90,11 @@ impl Universe {
 
     pub fn cells(&self) -> *const Cell {
         self.cells.as_ptr()
+    }
+
+    pub fn toggle_cell(&mut self, row: u32, column: u32) {
+        let idx = self.get_index(row, column);
+        self.cells[idx].toggle();
     }
 
     fn live_neighbor_count(&self, row: u32, column: u32) -> u8 {
