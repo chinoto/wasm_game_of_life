@@ -64,11 +64,22 @@ const drawCells = () => {
   ctx.stroke();
 })();
 
-(async () => {
+(async function renderLoop() {
+  let lastTime = performance.now();
+  const interval = 1000 / 30;
+  let delta = 0;
+  drawCells();
   while (true) {
-    drawCells();
-    universe.tick();
+    // setTimeout looks janky
+    // await new Promise((res) => setTimeout(res, 1000 / 30));
+    let time = await new Promise(requestAnimationFrame);
+    if (time - lastTime < interval - delta) {
+      continue;
+    }
+    delta = Math.min(interval, delta + time - lastTime - interval);
+    lastTime = time;
 
-    await new Promise(requestAnimationFrame);
+    universe.tick();
+    drawCells();
   }
 })();
