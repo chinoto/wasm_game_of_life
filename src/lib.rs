@@ -120,6 +120,7 @@ impl Universe {
     }
 
     pub fn tick(&mut self) {
+        #[cfg(target_arch = "wasm32")]
         let _timer = Timer::new("Universe::tick");
 
         for row in 0..self.height {
