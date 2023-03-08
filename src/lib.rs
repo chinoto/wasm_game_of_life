@@ -31,6 +31,7 @@ pub struct Universe {
     width: u32,
     height: u32,
     cells: Vec<Cell>,
+    swap: Vec<Cell>,
 }
 
 #[wasm_bindgen]
@@ -41,7 +42,7 @@ impl Universe {
         let width = 128;
         let height = 128;
 
-        let cells = (0..width * height)
+        let cells: Vec<Cell> = (0..width * height)
             .map(|i| {
                 if i % 2 == 0 || i % 7 == 0 {
                     Cell::Alive
@@ -54,6 +55,7 @@ impl Universe {
         Universe {
             width,
             height,
+            swap: cells.clone(),
             cells,
         }
     }
@@ -88,6 +90,7 @@ impl Universe {
         self.cells.clear();
         self.cells
             .extend((0..self.width * self.height).map(|_i| Cell::Dead));
+        self.swap.clone_from(&self.cells);
     }
 
     pub fn cells(&self) -> *const Cell {
@@ -118,7 +121,6 @@ impl Universe {
 
     pub fn tick(&mut self) {
         let _timer = Timer::new("Universe::tick");
-        let mut next = self.cells.clone();
 
         for row in 0..self.height {
             for col in 0..self.width {
@@ -143,11 +145,11 @@ impl Universe {
                     (otherwise, _) => otherwise,
                 };
 
-                next[idx] = next_cell;
+                self.swap[idx] = next_cell;
             }
         }
 
-        self.cells = next;
+        std::mem::swap(&mut self.cells, &mut self.swap);
     }
 }
 
