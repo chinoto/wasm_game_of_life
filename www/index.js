@@ -91,6 +91,38 @@ canvas.addEventListener("click", (event) => {
   drawCells();
 });
 
+const fps = new (class {
+  constructor() {
+    this.fps = document.getElementById("fps");
+    this.frames = [];
+    this.lastFrameTimeStamp = performance.now();
+  }
+
+  render() {
+    // Convert the delta time since the last frame render into a measure
+    // of frames per second.
+    const now = performance.now();
+    const fps = 1000 / (now - this.lastFrameTimeStamp);
+    this.lastFrameTimeStamp = now;
+
+    // Save only the latest 100 timings.
+    this.frames.unshift(fps);
+    this.frames.splice(100);
+    const frames = this.frames;
+
+    const mean = frames.reduce((a, b) => a + b, 0) / frames.length;
+    const roundTenth = (x) => Math.round(x * 10) / 10;
+    // Render the statistics.
+    this.fps.textContent = `
+Frames per Second:
+         latest = ${roundTenth(fps)}
+avg of last 100 = ${roundTenth(mean)}
+min of last 100 = ${roundTenth(Math.min(...frames))}
+max of last 100 = ${roundTenth(Math.max(...frames))}
+`.trim();
+  }
+})();
+
 (async function renderLoop() {
   let lastTime = performance.now();
   const interval = 1000 / 30;
@@ -103,6 +135,7 @@ canvas.addEventListener("click", (event) => {
     if (paused || time - lastTime < interval - delta) {
       continue;
     }
+    fps.render();
     delta = Math.min(interval, delta + time - lastTime - interval);
     lastTime = time;
 
