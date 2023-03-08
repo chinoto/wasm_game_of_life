@@ -27,18 +27,24 @@ const drawCells = () => {
 
   ctx.beginPath();
 
-  for (let row = 0; row < height; row++) {
-    for (let col = 0; col < width; col++) {
-      const idx = getIndex(row, col);
-
-      ctx.fillStyle = cells[idx] === Cell.Dead ? DEAD_COLOR : ALIVE_COLOR;
-
-      ctx.fillRect(
-        col * (CELL_SIZE + 1) + 1,
-        row * (CELL_SIZE + 1) + 1,
-        CELL_SIZE,
-        CELL_SIZE
-      );
+  for (let [filter, color] of [
+    [Cell.Alive, ALIVE_COLOR],
+    [Cell.Dead, DEAD_COLOR],
+  ]) {
+    ctx.fillStyle = color;
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        const idx = getIndex(row, col);
+        if (cells[idx] != filter) {
+          continue;
+        }
+        ctx.fillRect(
+          col * (CELL_SIZE + 1) + 1,
+          row * (CELL_SIZE + 1) + 1,
+          CELL_SIZE,
+          CELL_SIZE
+        );
+      }
     }
   }
 
