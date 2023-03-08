@@ -28,8 +28,8 @@ impl Cell {
 
 #[wasm_bindgen]
 pub struct Universe {
-    width: u32,
-    height: u32,
+    width: usize,
+    height: usize,
     cells: Vec<Cell>,
     swap: Vec<Cell>,
 }
@@ -64,24 +64,24 @@ impl Universe {
         self.to_string()
     }
 
-    fn get_index(&self, row: u32, column: u32) -> usize {
-        (row * self.width + column) as usize
+    fn get_index(&self, row: usize, column: usize) -> usize {
+        row * self.width + column
     }
 
-    pub fn width(&self) -> u32 {
+    pub fn width(&self) -> usize {
         self.width
     }
 
-    pub fn height(&self) -> u32 {
+    pub fn height(&self) -> usize {
         self.height
     }
 
-    pub fn set_width(&mut self, width: u32) {
+    pub fn set_width(&mut self, width: usize) {
         self.width = width;
         self.reset_cells();
     }
 
-    pub fn set_height(&mut self, height: u32) {
+    pub fn set_height(&mut self, height: usize) {
         self.height = height;
         self.reset_cells();
     }
@@ -97,12 +97,12 @@ impl Universe {
         self.cells.as_ptr()
     }
 
-    pub fn toggle_cell(&mut self, row: u32, column: u32) {
+    pub fn toggle_cell(&mut self, row: usize, column: usize) {
         let idx = self.get_index(row, column);
         self.cells[idx].toggle();
     }
 
-    fn live_neighbor_count(&self, row: u32, column: u32) -> u8 {
+    fn live_neighbor_count(&self, row: usize, column: usize) -> u8 {
         let mut count = 0;
         for delta_row in [self.height - 1, 0, 1].iter().cloned() {
             for delta_col in [self.width - 1, 0, 1].iter().cloned() {
@@ -158,7 +158,7 @@ impl Universe {
         &self.cells
     }
 
-    pub fn set_cells(&mut self, cells: &[(u32, u32)]) {
+    pub fn set_cells(&mut self, cells: &[(usize, usize)]) {
         for (row, col) in cells.iter().cloned() {
             let idx = self.get_index(row, col);
             self.cells[idx] = Cell::Alive;
@@ -174,7 +174,7 @@ impl Default for Universe {
 
 impl fmt::Display for Universe {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for line in self.cells.as_slice().chunks(self.width as usize) {
+        for line in self.cells.as_slice().chunks(self.width) {
             for &cell in line {
                 let symbol = if cell == Cell::Dead { '◻' } else { '◼' };
                 write!(f, "{}", symbol)?;
