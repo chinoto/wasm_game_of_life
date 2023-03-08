@@ -102,21 +102,28 @@ impl Universe {
         self.cells[idx].toggle();
     }
 
-    fn live_neighbor_count(&self, row: usize, column: usize) -> u8 {
-        let mut count = 0;
-        for delta_row in [self.height - 1, 0, 1].iter().cloned() {
-            for delta_col in [self.width - 1, 0, 1].iter().cloned() {
-                if delta_row == 0 && delta_col == 0 {
-                    continue;
-                }
+    fn live_neighbor_count(&self, row: usize, col: usize) -> u8 {
+        let north = if row == 0 { self.height - 1 } else { row - 1 };
+        let south = if row == self.height - 1 { 0 } else { row + 1 };
+        let west = if col == 0 { self.width - 1 } else { col - 1 };
+        let east = if col == self.width - 1 { 0 } else { col + 1 };
 
-                let neighbor_row = (row + delta_row) % self.height;
-                let neighbor_col = (column + delta_col) % self.width;
-                let idx = self.get_index(neighbor_row, neighbor_col);
-                count += self.cells[idx] as u8;
-            }
-        }
-        count
+        IntoIterator::into_iter([
+            (north, west),
+            (north, col),
+            (north, east),
+            (row, west),
+            // center
+            (row, east),
+            (south, west),
+            (south, col),
+            (south, east),
+        ])
+        .map(|(nbr_row, nbr_col)| {
+            let i = self.get_index(nbr_row, nbr_col);
+            self.cells[i] as u8
+        })
+        .sum()
     }
 
     pub fn tick(&mut self) {
