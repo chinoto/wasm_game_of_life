@@ -1,4 +1,4 @@
-import { memory } from "wasm-game-of-life/wasm_game_of_life_bg";
+import { memory } from "wasm-game-of-life/wasm_game_of_life_bg.wasm";
 import { Universe, Cell } from "wasm-game-of-life";
 
 const CELL_SIZE = 5; // px
@@ -10,16 +10,25 @@ const ALIVE_COLOR = "#000000";
 const universe = Universe.new();
 const width = universe.width();
 const height = universe.height();
+function throwError(msg: string): never {
+  throw new Error(msg);
+}
 
 // Give the canvas room for all of our cells and a 1px border
 // around each of them.
-const canvas = document.getElementById("game-of-life-canvas");
+const canvas =
+  document.getElementById("game-of-life-canvas") ??
+  throwError("Element not found");
+if (!(canvas instanceof HTMLCanvasElement)) {
+  throw Error("Element is not Canvas");
+}
 canvas.height = (CELL_SIZE + 1) * height + 1;
 canvas.width = (CELL_SIZE + 1) * width + 1;
 
-const ctx = canvas.getContext("2d");
+const ctx =
+  canvas.getContext("2d") ?? throwError("Failed to acquire canvas context");
 
-const getIndex = (row, column) => row * width + column;
+const getIndex = (row: number, column: number) => row * width + column;
 
 const drawCells = () => {
   const cellsPtr = universe.cells();
@@ -27,7 +36,7 @@ const drawCells = () => {
 
   ctx.beginPath();
 
-  for (let [filter, color] of [
+  for (let [filter, color] of <[number, string][]>[
     [Cell.Alive, ALIVE_COLOR],
     [Cell.Dead, DEAD_COLOR],
   ]) {
@@ -71,7 +80,8 @@ const drawCells = () => {
 })();
 
 let paused = false;
-const playPauseButton = document.getElementById("play-pause");
+const playPauseButton =
+  document.getElementById("play-pause") ?? throwError("Element not found");
 
 playPauseButton.addEventListener("click", (event) => {
   paused = !paused;
@@ -98,6 +108,9 @@ canvas.addEventListener("click", (event) => {
 });
 
 const fps = new (class {
+  fps;
+  frames: number[];
+  lastFrameTimeStamp;
   constructor() {
     this.fps = document.getElementById("fps");
     this.frames = [];
@@ -117,7 +130,7 @@ const fps = new (class {
     const frames = this.frames;
 
     const mean = frames.reduce((a, b) => a + b, 0) / frames.length;
-    const roundTenth = (x) => Math.round(x * 10) / 10;
+    const roundTenth = (x: number) => Math.round(x * 10) / 10;
     // Render the statistics.
     this.fps.textContent = `
 Frames per Second:
