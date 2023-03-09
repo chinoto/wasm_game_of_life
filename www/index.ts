@@ -1,5 +1,5 @@
-import { memory } from "wasm-game-of-life/wasm_game_of_life_bg.wasm";
-import { Universe, Cell } from "wasm-game-of-life";
+import init, { Universe, Cell } from "wasm-game-of-life";
+let { memory } = await init();
 
 const CELL_SIZE = 5; // px
 const GRID_COLOR = "#CCCCCC";
