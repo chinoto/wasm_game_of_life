@@ -28,38 +28,6 @@ canvas.width = (CELL_SIZE + 1) * width + 1;
 const ctx =
   canvas.getContext("2d") ?? throwError("Failed to acquire canvas context");
 
-const getIndex = (row: number, column: number) => row * width + column;
-
-const drawCells = () => {
-  const cellsPtr = universe.cells();
-  const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
-
-  ctx.beginPath();
-
-  for (let [filter, color] of <[number, string][]>[
-    [Cell.Alive, ALIVE_COLOR],
-    [Cell.Dead, DEAD_COLOR],
-  ]) {
-    ctx.fillStyle = color;
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const idx = getIndex(row, col);
-        if (cells[idx] != filter) {
-          continue;
-        }
-        ctx.fillRect(
-          col * (CELL_SIZE + 1) + 1,
-          row * (CELL_SIZE + 1) + 1,
-          CELL_SIZE,
-          CELL_SIZE
-        );
-      }
-    }
-  }
-
-  ctx.stroke();
-};
-
 (function drawGrid() {
   ctx.beginPath();
   ctx.strokeStyle = GRID_COLOR;
@@ -78,6 +46,36 @@ const drawCells = () => {
 
   ctx.stroke();
 })();
+
+const grid = ctx.getImageData(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = ALIVE_COLOR;
+
+const getIndex = (row: number, column: number) => row * width + column;
+
+const drawCells = () => {
+  const cellsPtr = universe.cells();
+  const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+
+  ctx.putImageData(grid, 0, 0);
+  ctx.beginPath();
+
+  for (let row = 0; row < height; row++) {
+    for (let col = 0; col < width; col++) {
+      const idx = getIndex(row, col);
+      if (cells[idx] != Cell.Alive) {
+        continue;
+      }
+      ctx.fillRect(
+        col * (CELL_SIZE + 1) + 1,
+        row * (CELL_SIZE + 1) + 1,
+        CELL_SIZE,
+        CELL_SIZE
+      );
+    }
+  }
+
+  ctx.stroke();
+};
 
 let paused = false;
 const playPauseButton =
