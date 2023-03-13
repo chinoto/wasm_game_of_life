@@ -130,33 +130,33 @@ impl Universe {
         #[cfg(target_arch = "wasm32")]
         let _timer = Timer::new("Universe::tick");
 
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let idx = self.get_index(row, col);
-                let cell = self.cells[idx];
-                let live_neighbors = self.live_neighbor_count(row, col);
+        let mut swap = std::mem::take(&mut self.swap); // Avoid borrowing self, so it can be borrowed later
 
-                let next_cell = match (cell, live_neighbors) {
-                    // Rule 1: Any live cell with fewer than two live neighbours
-                    // dies, as if caused by underpopulation.
-                    // Rule 3: Any live cell with more than three live
-                    // neighbours dies, as if by overpopulation.
-                    // Rule 1+3: Any live cell that doesn't have two or three neighbors dies.
-                    (Cell::Alive, x) if x != 2 && x != 3 => Cell::Dead,
-                    // Rule 4: Any dead cell with exactly three live neighbours
-                    // becomes a live cell, as if by reproduction.
-                    (Cell::Dead, 3) => Cell::Alive,
-                    // All other cells remain in the same state. (effectively includes rule 2)
-                    // Rule 2: Any live cell with two or three live neighbours
-                    // lives on to the next generation.
-                    (otherwise, _) => otherwise,
-                };
+        let iter =
+            { swap.chunks_exact_mut(self.width).enumerate() }.flat_map(|(row, row_slice)| {
+                { row_slice.iter_mut().enumerate() }.map(move |(col, cell)| (row, col, cell))
+            });
+        iter.enumerate().for_each(|(idx, (row, col, cell))| {
+            let live_neighbors = self.live_neighbor_count(row, col);
 
-                self.swap[idx] = next_cell;
-            }
-        }
+            *cell = match (self.cells[idx], live_neighbors) {
+                // Rule 1: Any live cell with fewer than two live neighbours
+                // dies, as if caused by underpopulation.
+                // Rule 3: Any live cell with more than three live
+                // neighbours dies, as if by overpopulation.
+                // Rule 1+3: Any live cell that doesn't have two or three neighbors dies.
+                (Cell::Alive, x) if x != 2 && x != 3 => Cell::Dead,
+                // Rule 4: Any dead cell with exactly three live neighbours
+                // becomes a live cell, as if by reproduction.
+                (Cell::Dead, 3) => Cell::Alive,
+                // All other cells remain in the same state. (effectively includes rule 2)
+                // Rule 2: Any live cell with two or three live neighbours
+                // lives on to the next generation.
+                (otherwise, _) => otherwise,
+            };
+        });
 
-        std::mem::swap(&mut self.cells, &mut self.swap);
+        self.swap = std::mem::replace(&mut self.cells, swap);
     }
 }
 
