@@ -162,35 +162,42 @@ max of last 100 = ${roundTenth(1000 / Math.min(...frames))}
 })();
 
 (async function renderLoop() {
-  let lastTime = performance.now();
+  let lastFrameStart = performance.now();
   let delta = 0;
   drawCells();
+  let tickTimes: number[] = [];
+  let lastFrameEnd = 0;
   while (true) {
     // setTimeout looks janky
     // await new Promise((res) => setTimeout(res, 1000 / 30));
-    let time = await new Promise(requestAnimationFrame);
-    const timeDiff = time - lastTime;
+    let thisFrameStart = await new Promise(requestAnimationFrame);
+    const timeDiff = thisFrameStart - lastFrameStart;
     if (paused || timeDiff < interval - delta) {
       continue;
     }
     fps.render();
+    fps.fps.textContent += `\ntps=${roundTenth(
+      (1000 * tickTimes.length) /
+        (thisFrameStart - tickTimes[tickTimes.length - 1])
+    )}`;
     delta += timeDiff;
-    lastTime = time;
+    lastFrameStart = thisFrameStart;
 
-    let count = 0;
     while (delta > interval) {
-      ++count;
       universe.tick();
       delta -= interval;
-      if (performance.now() - time > 5) {
-        if (delta > interval) {
-          console.log("Took too long", count, delta, interval);
-        }
+      let now = performance.now();
+      tickTimes.unshift(now);
+      tickTimes.splice(100);
+      // This should result in the code running for 80% of every frame at most.
+      const idleTime = thisFrameStart - lastFrameEnd;
+      if (now - thisFrameStart > Math.min(100, idleTime * 4)) {
         break;
       }
     }
     delta = Math.min(interval, delta);
 
     drawCells();
+    lastFrameEnd = performance.now();
   }
 })();
