@@ -13,6 +13,7 @@ const height = universe.height();
 function throwError(msg: string): never {
   throw new Error(msg);
 }
+const roundTenth = (x: number) => Math.round(x * 10) / 10;
 
 // Give the canvas room for all of our cells and a 1px border
 // around each of them.
@@ -78,15 +79,36 @@ const drawCells = () => {
 };
 
 let paused = false;
+let interval = 1;
 const playPauseButton =
   document.getElementById("play-pause") ?? throwError("Element not found");
+const rateSlider =
+  document.getElementById("rate") ?? throwError("Element not found");
+if (!(rateSlider instanceof HTMLInputElement)) {
+  throwError("rateSlider is not an input");
+}
+const rateDisplay =
+  document.getElementById("rate_display") ?? throwError("Element not found");
 
 playPauseButton.addEventListener("click", (event) => {
   paused = !paused;
   playPauseButton.textContent = paused ? "⏸" : "▶";
 });
-
 playPauseButton.click(); // Run once to get play/pause indicator
+
+rateSlider.addEventListener("input", (event) => {
+  let rate = rateSlider.valueAsNumber;
+  // Convert 0-25-100 to 0.2-1-1000
+  if (rate < 25) {
+    rate = 0.2 + (rate / 25) * 0.8;
+  } else {
+    // pow to make smaller values easier to select
+    rate = 1 + Math.pow((rate - 25) / 75, 2) * 999;
+  }
+  interval = 1000 / rate;
+  rateDisplay.textContent = `${roundTenth(rate)}`;
+});
+rateSlider.dispatchEvent(new Event("input"));
 
 canvas.addEventListener("click", (event) => {
   const boundingRect = canvas.getBoundingClientRect();
@@ -119,44 +141,56 @@ const fps = new (class {
     // Convert the delta time since the last frame render into a measure
     // of frames per second.
     const now = performance.now();
-    const fps = 1000 / (now - this.lastFrameTimeStamp);
+    const frameTime = now - this.lastFrameTimeStamp;
     this.lastFrameTimeStamp = now;
 
     // Save only the latest 100 timings.
-    this.frames.unshift(fps);
+    this.frames.unshift(frameTime);
     this.frames.splice(100);
     const frames = this.frames;
 
     const mean = frames.reduce((a, b) => a + b, 0) / frames.length;
-    const roundTenth = (x: number) => Math.round(x * 10) / 10;
     // Render the statistics.
     this.fps.textContent = `
 Frames per Second:
-         latest = ${roundTenth(fps)}
-avg of last 100 = ${roundTenth(mean)}
-min of last 100 = ${roundTenth(Math.min(...frames))}
-max of last 100 = ${roundTenth(Math.max(...frames))}
+         latest = ${roundTenth(1000 / frameTime)}
+avg of last 100 = ${roundTenth(1000 / mean)}
+min of last 100 = ${roundTenth(1000 / Math.max(...frames))}
+max of last 100 = ${roundTenth(1000 / Math.min(...frames))}
 `.trim();
   }
 })();
 
 (async function renderLoop() {
   let lastTime = performance.now();
-  const interval = 1000 / 30;
   let delta = 0;
   drawCells();
   while (true) {
     // setTimeout looks janky
     // await new Promise((res) => setTimeout(res, 1000 / 30));
     let time = await new Promise(requestAnimationFrame);
-    if (paused || time - lastTime < interval - delta) {
+    const timeDiff = time - lastTime;
+    if (paused || timeDiff < interval - delta) {
       continue;
     }
     fps.render();
-    delta = Math.min(interval, delta + time - lastTime - interval);
+    delta += timeDiff;
     lastTime = time;
 
-    universe.tick();
+    let count = 0;
+    while (delta > interval) {
+      ++count;
+      universe.tick();
+      delta -= interval;
+      if (performance.now() - time > 5) {
+        if (delta > interval) {
+          console.log("Took too long", count, delta, interval);
+        }
+        break;
+      }
+    }
+    delta = Math.min(interval, delta);
+
     drawCells();
   }
 })();
