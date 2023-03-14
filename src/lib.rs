@@ -127,8 +127,9 @@ impl Universe {
     }
 
     pub fn tick(&mut self) {
-        #[cfg(target_arch = "wasm32")]
-        let _timer = Timer::new("Universe::tick");
+        // Trying to measure influences the measurement
+        // #[cfg(target_arch = "wasm32")]
+        // let _timer = Timer::new("Universe::tick");
 
         let mut swap = std::mem::take(&mut self.swap); // Avoid borrowing self, so it can be borrowed later
 
