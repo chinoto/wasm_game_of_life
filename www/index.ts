@@ -13,15 +13,16 @@ const height = universe.height();
 function throwError(msg: string): never {
   throw new Error(msg);
 }
+function getElementByIdOrThrow(id: string): HTMLElement {
+  return document.getElementById(id) ?? throwError("Element not found");
+}
 const roundTenth = (x: number) => Math.round(x * 10) / 10;
 
 // Give the canvas room for all of our cells and a 1px border
 // around each of them.
-const canvas =
-  document.getElementById("game-of-life-canvas") ??
-  throwError("Element not found");
+const canvas = getElementByIdOrThrow("game-of-life-canvas");
 if (!(canvas instanceof HTMLCanvasElement)) {
-  throw Error("Element is not Canvas");
+  throwError("Element is not Canvas");
 }
 canvas.height = (CELL_SIZE + 1) * height + 1;
 canvas.width = (CELL_SIZE + 1) * width + 1;
@@ -80,15 +81,12 @@ const drawCells = () => {
 
 let paused = false;
 let interval = 1;
-const playPauseButton =
-  document.getElementById("play-pause") ?? throwError("Element not found");
-const rateSlider =
-  document.getElementById("rate") ?? throwError("Element not found");
+const playPauseButton = getElementByIdOrThrow("play-pause");
+const rateSlider = getElementByIdOrThrow("rate");
 if (!(rateSlider instanceof HTMLInputElement)) {
   throwError("rateSlider is not an input");
 }
-const rateDisplay =
-  document.getElementById("rate_display") ?? throwError("Element not found");
+const rateDisplay = getElementByIdOrThrow("rate_display");
 
 playPauseButton.addEventListener("click", (event) => {
   paused = !paused;
