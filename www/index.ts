@@ -87,6 +87,7 @@ if (!(rateSlider instanceof HTMLInputElement)) {
   throwError("rateSlider is not an input");
 }
 const rateDisplay = getElementByIdOrThrow("rate_display");
+const clearButton = getElementByIdOrThrow("clear");
 
 playPauseButton.addEventListener("click", (event) => {
   paused = !paused;
@@ -107,6 +108,11 @@ rateSlider.addEventListener("input", (event) => {
   rateDisplay.textContent = `${roundTenth(rate)}`;
 });
 rateSlider.dispatchEvent(new Event("input"));
+
+clearButton.addEventListener("click", (event) => {
+  universe.reset_cells();
+  drawCells();
+});
 
 canvas.addEventListener("click", (event) => {
   const boundingRect = canvas.getBoundingClientRect();
