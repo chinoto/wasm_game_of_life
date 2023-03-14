@@ -175,13 +175,18 @@ max of last 100 = ${roundTenth(1000 / Math.min(...frames))}
     if (paused || timeDiff < interval - delta) {
       continue;
     }
+    delta += timeDiff;
+    lastFrameStart = thisFrameStart;
+    const idleTime = thisFrameStart - lastFrameEnd;
+    // When the target fps is higher than the refresh rate, this threshold should
+    // allow extra work to be done (80% of the time) without missing a frame.
+    const maxFrameTime = Math.min(100, idleTime * 4);
+
     fps.render();
     fps.fps.textContent += `\ntps=${roundTenth(
       (1000 * tickTimes.length) /
         (thisFrameStart - tickTimes[tickTimes.length - 1])
     )}`;
-    delta += timeDiff;
-    lastFrameStart = thisFrameStart;
 
     while (delta > interval) {
       universe.tick();
@@ -189,9 +194,7 @@ max of last 100 = ${roundTenth(1000 / Math.min(...frames))}
       let now = performance.now();
       tickTimes.unshift(now);
       tickTimes.splice(100);
-      // This should result in the code running for 80% of every frame at most.
-      const idleTime = thisFrameStart - lastFrameEnd;
-      if (now - thisFrameStart > Math.min(100, idleTime * 4)) {
+      if (now - thisFrameStart > maxFrameTime) {
         break;
       }
     }
