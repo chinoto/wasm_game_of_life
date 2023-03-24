@@ -175,6 +175,10 @@ max of last 100 = ${roundTenth(1000 / Math.min(...frames))}
     // setTimeout looks janky
     // await new Promise((res) => setTimeout(res, 1000 / 30));
     let thisFrameStart = await new Promise(requestAnimationFrame);
+    if (paused) {
+      lastFrameStart = thisFrameStart;
+      continue;
+    }
     const timeDiff = thisFrameStart - lastFrameStart;
     if (paused || timeDiff < interval - delta) {
       continue;
